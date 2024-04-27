@@ -3,7 +3,6 @@ package helpers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -48,14 +47,9 @@ func mockServer() (*httptest.Server, *http.ServeMux) {
 	})
 
 	mux.HandleFunc("/decode-json", func(w http.ResponseWriter, r *http.Request) {
-		data, problems, err := DecodeJSON[*CreateUser](r)
+		data, _, err := DecodeJSON[*CreateUser](r)
 
-		if err != nil {
-			fmt.Println(err)
-			RespondWithJSON(w, http.StatusInternalServerError, err)
-		}
-
-		if len(problems) != 0 {
+		if err != nil && err == ErrValidation {
 			RespondWithJSON(w, http.StatusUnprocessableEntity, err)
 		}
 
@@ -125,21 +119,20 @@ func TestDecodeJSON(t *testing.T) {
 
 	t.Log("Given the need to test decoding JSON.")
 	{
-		t.Log("\tWhen checking for status code.")
+		t.Log("When checking for a passing validation")
 		{
 			reqBody := `
 			{
-				"username": "Adedunmola", "password": ""
+				"username": "Adedunmola", "password": "password123"
 			}
 			`
 
 			req, err := http.NewRequest(http.MethodPost, server.URL+"/decode-json", strings.NewReader(reqBody))
-			// res, err := http.Get(server.URL)
 
 			if err != nil {
-				t.Fatal("\t\tShould be able to create the GET call", ballotX, err)
+				t.Fatal("\t\tShould be able to create the POST call", ballotX, err)
 			}
-			t.Log("\t\tShould be able to create the GET call.", checkMark)
+			t.Log("\t\tShould be able to create the POST call.", checkMark)
 
 			rw := httptest.NewRecorder()
 			mux.ServeHTTP(rw, req)
@@ -150,7 +143,33 @@ func TestDecodeJSON(t *testing.T) {
 			}
 
 			t.Logf("\t\tShould receive a %d status code. %v", statusCode, checkMark)
+		}
 
+		statusCode = http.StatusUnprocessableEntity
+		t.Log("When checking for a failing validation")
+		{
+			reqBody := `
+			{
+				"username": "Adedunmola", "password": ""
+			}
+			`
+
+			req, err := http.NewRequest(http.MethodPost, server.URL+"/decode-json", strings.NewReader(reqBody))
+
+			if err != nil {
+				t.Fatal("\t\tShould be able to create the POST call", ballotX, err)
+			}
+			t.Log("\t\tShould be able to create the POST call.", checkMark)
+
+			rw := httptest.NewRecorder()
+			mux.ServeHTTP(rw, req)
+
+			if rw.Code != statusCode {
+				t.Log(rw.Body)
+				t.Errorf("\t\tShould receive a %d status code, but got %v. %v", statusCode, rw.Code, ballotX)
+			}
+
+			t.Logf("\t\tShould receive a %d status code. %v", statusCode, checkMark)
 		}
 	}
 }
