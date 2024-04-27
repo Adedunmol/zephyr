@@ -1,17 +1,42 @@
 package helpers
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
+
+var mux *http.ServeMux
 
 const checkMark = "\u2713"
 const ballotX = "\u2717"
 
-func mockServer() *httptest.Server {
-	f := func(w http.ResponseWriter, r *http.Request) {
+type CreateUser struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func (r *CreateUser) Valid(ctx context.Context) (problems map[string]string) {
+	problems = make(map[string]string)
+
+	if r.Username == "" {
+		problems["username"] = "username required"
+	}
+	if r.Password == "" {
+		problems["password"] = "password required"
+	}
+
+	return problems
+}
+
+func mockServer() (*httptest.Server, *http.ServeMux) {
+	mux = http.NewServeMux()
+
+	mux.HandleFunc("/respond-with-json", func(w http.ResponseWriter, r *http.Request) {
 		payload := struct {
 			Status string
 			Data   string
@@ -20,30 +45,49 @@ func mockServer() *httptest.Server {
 			Data:   "Hello",
 		}
 		RespondWithJSON(w, http.StatusOK, payload)
-	}
+	})
 
-	return httptest.NewServer(http.HandlerFunc(f))
+	mux.HandleFunc("/decode-json", func(w http.ResponseWriter, r *http.Request) {
+		data, problems, err := DecodeJSON[*CreateUser](r)
+
+		if err != nil {
+			fmt.Println(err)
+			RespondWithJSON(w, http.StatusInternalServerError, err)
+		}
+
+		if len(problems) != 0 {
+			RespondWithJSON(w, http.StatusUnprocessableEntity, err)
+		}
+
+		RespondWithJSON(w, http.StatusOK, data)
+	})
+
+	return httptest.NewServer(mux), mux
 }
 
 func TestRespondWithJSON(t *testing.T) {
 	statusCode := http.StatusOK
 
-	server := mockServer()
+	server, mux := mockServer()
 	defer server.Close()
 
 	t.Log("Given the need to test responding with JSON.")
 	{
-		t.Logf("\tWhen checking %s for %d status code.", server.URL, statusCode)
+		t.Log("\tWhen checking for status code.")
 		{
-			res, err := http.Get(server.URL)
+			req, err := http.NewRequest(http.MethodGet, server.URL+"/respond-with-json", nil)
+			// res, err := http.Get(server.URL)
 
 			if err != nil {
-				t.Fatal("\t\tShould be able to make the GET call", ballotX, err)
+				t.Fatal("\t\tShould be able to create the GET call", ballotX, err)
 			}
-			t.Log("\t\tShould be able to make the GET call.", checkMark)
+			t.Log("\t\tShould be able to create the GET call.", checkMark)
 
-			if res.StatusCode != statusCode {
-				t.Errorf("\t\tShould receive a %d status code, but got %v. %v", statusCode, res.StatusCode, ballotX)
+			rw := httptest.NewRecorder()
+			mux.ServeHTTP(rw, req)
+
+			if rw.Code != statusCode {
+				t.Errorf("\t\tShould receive a %d status code, but got %v. %v", statusCode, rw.Code, ballotX)
 			}
 
 			t.Logf("\t\tShould receive a %d status code. %v", statusCode, checkMark)
@@ -53,7 +97,7 @@ func TestRespondWithJSON(t *testing.T) {
 				Data   string
 			}{}
 
-			if err := json.NewDecoder(res.Body).Decode(&payload); err != nil {
+			if err := json.NewDecoder(rw.Body).Decode(&payload); err != nil {
 				t.Fatal("\t\t\tShould decode response.", ballotX)
 			}
 			t.Log("\t\t\tShould decode response.", checkMark)
@@ -69,6 +113,44 @@ func TestRespondWithJSON(t *testing.T) {
 			} else {
 				t.Log("\t\t\t\tShould have data.", ballotX, payload.Data)
 			}
+		}
+	}
+}
+
+func TestDecodeJSON(t *testing.T) {
+	statusCode := http.StatusOK
+
+	server, mux := mockServer()
+	defer server.Close()
+
+	t.Log("Given the need to test decoding JSON.")
+	{
+		t.Log("\tWhen checking for status code.")
+		{
+			reqBody := `
+			{
+				"username": "Adedunmola", "password": ""
+			}
+			`
+
+			req, err := http.NewRequest(http.MethodPost, server.URL+"/decode-json", strings.NewReader(reqBody))
+			// res, err := http.Get(server.URL)
+
+			if err != nil {
+				t.Fatal("\t\tShould be able to create the GET call", ballotX, err)
+			}
+			t.Log("\t\tShould be able to create the GET call.", checkMark)
+
+			rw := httptest.NewRecorder()
+			mux.ServeHTTP(rw, req)
+
+			if rw.Code != statusCode {
+				t.Log(rw.Body)
+				t.Errorf("\t\tShould receive a %d status code, but got %v. %v", statusCode, rw.Code, ballotX)
+			}
+
+			t.Logf("\t\tShould receive a %d status code. %v", statusCode, checkMark)
+
 		}
 	}
 }
