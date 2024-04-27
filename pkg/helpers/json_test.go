@@ -70,7 +70,6 @@ func TestRespondWithJSON(t *testing.T) {
 		t.Log("\tWhen checking for status code.")
 		{
 			req, err := http.NewRequest(http.MethodGet, server.URL+"/respond-with-json", nil)
-			// res, err := http.Get(server.URL)
 
 			if err != nil {
 				t.Fatal("\t\tShould be able to create the GET call", ballotX, err)
