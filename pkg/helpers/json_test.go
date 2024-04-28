@@ -268,7 +268,6 @@ func TestAdvancedDecodeJSON(t *testing.T) {
 			}
 
 			t.Logf("\t\tShould receive a %d status code. %v", statusCode, checkMark)
-			t.Log(rw.Body)
 		}
 	}
 }
