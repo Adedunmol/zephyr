@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Adedunmol/zephyr/pkg/config"
+	_ "github.com/Adedunmol/zephyr/pkg/database"
 	"github.com/Adedunmol/zephyr/pkg/helpers"
 	"github.com/go-chi/chi/v5"
 )
