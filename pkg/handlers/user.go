@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/Adedunmol/zephyr/pkg/database"
@@ -17,8 +18,8 @@ type CreateUser struct {
 	FirstName string `json:"first_name" validate:"required"`
 	LastName  string `json:"last_name" validate:"required"`
 	Username  string `json:"username" validate:"required"`
-	Password  string `json:"password" validate:"required, min=6"`
-	Email     string `json:"email" validate:"required, email"`
+	Password  string `json:"password" validate:"required,min=6"`
+	Email     string `json:"email" validate:"required,email"`
 }
 
 func (u *CreateUser) Valid(ctx context.Context) (problems map[string]string) {
@@ -28,10 +29,25 @@ func (u *CreateUser) Valid(ctx context.Context) (problems map[string]string) {
 
 	if err := v.Struct(u); err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
-			field := err.Field()
-			message := err.Tag()
 
-			problems[field] = message
+			switch err.Tag() {
+			case "required":
+				field := err.Field()
+				message := fmt.Sprintf("Field '%s' cannot be blank", err.Field())
+				problems[field] = message
+			case "email":
+				field := err.Field()
+				message := fmt.Sprintf("Field '%s' must be a valid email address", err.Field())
+				problems[field] = message
+			case "len":
+				field := err.Field()
+				message := fmt.Sprintf("Field '%s' must be exactly %v characters long", err.Field(), err.Param())
+				problems[field] = message
+			default:
+				field := err.Field()
+				message := fmt.Sprintf("Field '%s': '%v' must satisfy '%s' '%v' criteria", err.Field(), err.Value(), err.Tag(), err.Param())
+				problems[field] = message
+			}
 		}
 	}
 
@@ -44,13 +60,13 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 
 		if err == helpers.ErrValidation {
-			helpers.RespondWithJSON(w, http.StatusUnprocessableEntity, problems)
+			helpers.RespondWithJSON(w, http.StatusUnprocessableEntity, helpers.APIResponse{Status: "error", Message: "error processing data", Data: problems})
 			return
 		}
 
 		if err == helpers.ErrDecode {
 			helpers.Error.Println(err)
-			helpers.RespondWithJSON(w, http.StatusInternalServerError, "Unable to decode json")
+			helpers.RespondWithJSON(w, http.StatusBadRequest, helpers.APIResponse{Status: "error", Message: "request body needed", Data: nil})
 			return
 		}
 	}

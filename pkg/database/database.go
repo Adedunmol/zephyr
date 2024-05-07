@@ -2,6 +2,7 @@ package database
 
 import (
 	"github.com/Adedunmol/zephyr/pkg/helpers"
+	"github.com/Adedunmol/zephyr/pkg/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -9,11 +10,11 @@ import (
 
 var DB *gorm.DB
 
-func init() {
+func InitDB() {
 	var err error
 
 	if helpers.EnvConfig.Environment == "test" {
-		DB, err = gorm.Open(postgres.Open(helpers.EnvConfig.DatabaseUrl), &gorm.Config{TranslateError: true})
+		DB, err = gorm.Open(postgres.Open(helpers.EnvConfig.TestDatabaseUrl), &gorm.Config{TranslateError: true})
 	} else {
 		DB, err = gorm.Open(postgres.Open(helpers.EnvConfig.DatabaseUrl), &gorm.Config{TranslateError: true})
 	}
@@ -28,5 +29,5 @@ func init() {
 		helpers.Info.Println("Running migrations")
 	}
 
-	DB.AutoMigrate()
+	DB.AutoMigrate(&models.User{})
 }
