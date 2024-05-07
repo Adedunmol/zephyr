@@ -1,0 +1,9 @@
+ERROR: 2024/05/07 19:43:17 database.go:22: error connecting to db: %wfailed to connect to `host=localhost user=USER database=`: failed SASL auth (FATAL: password authentication failed for user "USER" (SQLSTATE 28P01))
+ERROR: 2024/05/07 19:45:36 database.go:23: error connecting to db: %wfailed to connect to `host=localhost user=USER database=`: failed SASL auth (FATAL: password authentication failed for user "USER" (SQLSTATE 28P01))
+ERROR: 2024/05/07 19:49:37 database.go:26: error connecting to db: %wfailed to connect to `host=localhost user=USER database=`: failed SASL auth (FATAL: password authentication failed for user "USER" (SQLSTATE 28P01))
+ERROR: 2024/05/07 19:51:51 database.go:27: error connecting to db: %wfailed to connect to `host=localhost user=USER database=`: failed SASL auth (FATAL: password authentication failed for user "USER" (SQLSTATE 28P01))
+ERROR: 2024/05/07 20:04:55 user.go:52: error decoding JSON: EOF
+ERROR: 2024/05/07 20:12:26 user.go:52: error decoding JSON: EOF
+ERROR: 2024/05/07 20:13:56 user.go:52: error decoding JSON: EOF
+ERROR: 2024/05/07 20:18:39 user.go:52: error decoding JSON: EOF
+ERROR: 2024/05/07 20:24:16 user.go:80: duplicated key not allowed
