@@ -41,9 +41,18 @@ func (u *CreateUser) Valid(ctx context.Context) (problems map[string]string) {
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	data, problems, err := helpers.DecodeJSON[*CreateUser](r)
 
-	if err != nil && err == helpers.ErrValidation {
-		helpers.RespondWithJSON(w, http.StatusUnprocessableEntity, problems)
-		return
+	if err != nil {
+
+		if err == helpers.ErrValidation {
+			helpers.RespondWithJSON(w, http.StatusUnprocessableEntity, problems)
+			return
+		}
+
+		if err == helpers.ErrDecode {
+			helpers.Error.Println(err)
+			helpers.RespondWithJSON(w, http.StatusInternalServerError, "Unable to decode json")
+			return
+		}
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(data.Password), 14)

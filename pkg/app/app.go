@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Adedunmol/zephyr/pkg/config"
 	_ "github.com/Adedunmol/zephyr/pkg/database"
 	"github.com/Adedunmol/zephyr/pkg/helpers"
 	"github.com/go-chi/chi/v5"
@@ -13,7 +12,7 @@ import (
 const PORT = 5000
 
 func init() {
-	err := config.LoadConfig("../..")
+	err := helpers.LoadConfig("../..")
 	if err != nil {
 		helpers.Error.Fatal("Error loading .env file", err)
 	}
