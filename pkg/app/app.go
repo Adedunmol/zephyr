@@ -12,7 +12,7 @@ import (
 const PORT = 5001
 
 func init() {
-	err := helpers.LoadConfig("../..")
+	err := helpers.LoadConfig(".")
 
 	database.InitDB()
 

@@ -22,6 +22,7 @@ func LoadConfig(path string) error {
 
 	err := viper.ReadInConfig()
 	if err != nil {
+		Error.Println(err)
 		Error.Fatal("Could not load env file")
 		return err
 	}

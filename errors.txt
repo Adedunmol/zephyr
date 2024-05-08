@@ -1,0 +1,3 @@
+ERROR: 2024/05/08 23:17:18 config.go:25: Could not load env file
+ERROR: 2024/05/08 23:18:22 config.go:25: Config File "app" Not Found in "[C:\\Users]"
+ERROR: 2024/05/08 23:18:22 config.go:26: Could not load env file
