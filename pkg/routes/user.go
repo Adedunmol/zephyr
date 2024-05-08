@@ -10,6 +10,7 @@ func SetupUserRoutes(m *chi.Mux) {
 	userRouter := chi.NewRouter()
 
 	userRouter.Post("/register", handlers.CreateUserHandler)
+	userRouter.Post("/login", handlers.LoginUserHandler)
 
 	m.Mount("/users", userRouter)
 }
